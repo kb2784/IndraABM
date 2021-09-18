@@ -22,6 +22,7 @@ from APIServer.model_api import run_model, create_model, create_model_for_test
 from APIServer.props_api import get_props
 from APIServer.source_api import get_source_code
 from lib.utils import get_indra_home
+from APIServer.process_manager import processManager
 
 PERIODS = "periods"
 POPS = "pops"
@@ -242,9 +243,6 @@ class Props(Resource):
         """
         props = PropArgs.create_props(str(model_id),
                                       prop_dict=get_props(model_id, indra_dir))
-        exec_key = create_exec_env(save_on_register=True)
-        props["exec_key"] = exec_key
-        registry.save_reg(exec_key)
         return props.to_json()
 
     @api.doc(params={'model_id': 'Which model to fetch code for.'})
@@ -256,9 +254,7 @@ class Props(Resource):
         Put a revised list of parameters for a model back to the server.
         This should return a new model with the revised props.
         """
-        exec_key = api.payload['exec_key'].get('val')
-        model = json_converter(create_model(model_id, api.payload, indra_dir))
-        registry.save_reg(exec_key)
+        model = json_converter(processManager.spawn_model(model_id, api.payload, indra_dir))
         return model
 
 
@@ -313,10 +309,10 @@ class RunModel(Resource):
         try:
             exec_key = api.payload['exec_key']
             print(f'Executing for key {exec_key}')
+            model = processManager.run_model(run_time)
             model = run_model(api.payload, run_time, indra_dir)
             if model is None:
                 raise wz.NotFound(f"Model not found: {api.payload['module']}")
-            registry.save_reg(exec_key)
             return json_converter(model)
         except Exception as err:
             raise wz.InternalServerError(f"Server error: {str(err)}")

@@ -41,7 +41,7 @@ class ProcessManager:
             return None
         modelProcess.parent_conn.send(runtime)
         model = modelProcess.parent_conn.recv()
-        model["exec_key"] = exec_key
+        model.exec_key = exec_key
         return model
 
 processManager = ProcessManager()

@@ -309,8 +309,7 @@ class RunModel(Resource):
         try:
             exec_key = api.payload['exec_key']
             print(f'Executing for key {exec_key}')
-            model = processManager.run_model(run_time)
-            model = run_model(api.payload, run_time, indra_dir)
+            model = processManager.run_model(exec_key, run_time)
             if model is None:
                 raise wz.NotFound(f"Model not found: {api.payload['module']}")
             return json_converter(model)

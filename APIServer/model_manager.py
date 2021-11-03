@@ -1,34 +1,27 @@
 from lru import LRU
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Pipe, cpu_count
 from APIServer.model_api import run_model, create_model, create_model_for_test
 from APIServer.api_utils import json_converter
+from APIServer.model_process import createModelProcess, Message, CommunicationType
 import uuid
 
-processManager = None
+modelManager = None
 
-def createModelProcess(conn, model_id, payload, indra_dir):
-    model = create_model(model_id, payload, indra_dir)
-    conn.send(model)
-    while True:
-        periods = conn.recv()
-        model.runN(int(periods))
-        conn.send(model)
-
-class ModelProcess:
+class ProcessPipePair:
     def __init__(self, process, parent_conn):
         self.process = process
         self.parent_conn = parent_conn
 
-class ProcessManager:
+class ModelManager:
     def __init__(self):
-        print("Creating new process manager")
-        self.processes = LRU(20)
+        print("Creating new model manager")
+        self.processes = LRU(cpu_count() * 5 + 1)       # Not too many processes but also not too less
 
     def spawn_model(self, model_id, payload, indra_dir):
         parent_conn, child_conn = Pipe()
-        new_process = Process(target=createModelProcess, args=(child_conn, model_id, payload, indra_dir))
-        mp = ModelProcess(new_process, parent_conn)
         exec_key = str(uuid.uuid4())
+        new_process = Process(target=createModelProcess, args=(child_conn, model_id, payload, indra_dir))
+        mp = ProcessPipePair(new_process, parent_conn)
         self.processes[exec_key] = mp
         new_process.start()
         model = parent_conn.recv()
@@ -39,9 +32,10 @@ class ProcessManager:
         modelProcess = self.processes[exec_key]
         if(modelProcess is None):
             return None
-        modelProcess.parent_conn.send(runtime)
+        message = Message(CommunicationType.RUN_MODEL, {runtime})
+        modelProcess.parent_conn.send(message)
         model = modelProcess.parent_conn.recv()
         model.exec_key = exec_key
         return model
 
-processManager = ProcessManager()
+modelManager = ModelManager()

@@ -22,7 +22,7 @@ from APIServer.model_api import run_model, create_model, create_model_for_test
 from APIServer.props_api import get_props
 from APIServer.source_api import get_source_code
 from lib.utils import get_indra_home
-from APIServer.process_manager import processManager
+from APIServer.model_manager import modelManager
 
 PERIODS = "periods"
 POPS = "pops"
@@ -254,8 +254,8 @@ class Props(Resource):
         Put a revised list of parameters for a model back to the server.
         This should return a new model with the revised props.
         """
-        model = json_converter(processManager.spawn_model(model_id, api.payload, indra_dir))
-        return model
+        model = modelManager.spawn_model(model_id, api.payload, indra_dir)
+        return json_converter(model)
 
 
 @api.route('/menus/debug')
@@ -309,7 +309,7 @@ class RunModel(Resource):
         try:
             exec_key = api.payload['exec_key']
             print(f'Executing for key {exec_key}')
-            model = processManager.run_model(exec_key, run_time)
+            model = modelManager.run_model(exec_key, run_time)
             if model is None:
                 raise wz.NotFound(f"Model not found: {api.payload['module']}")
             return json_converter(model)

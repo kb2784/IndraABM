@@ -41,6 +41,10 @@ At the very beginning, each `HEALTHY` tree has probability to catch fire on its 
 The more dense of the tress, the easier and faster the fire spread.  
  Finally, the `BURNED_OUT` tree will become `NEW_GROWTH”`and return to `HEALTHY”`state. 
 
+ There are also factors that effect a forest fire. Some of which include: 
+    * Wind Speed
+    * Wind Direction
+
 ### Schelling's Segregation Model:
 It has 7 inputs:  `GRID_HEIGHT`, `GRID_WIDTH`, `THE_DENSITY_OF_BLUE_AGENT`, `THE_DENSITY_OF_RED_AGENT`,`THE_TOLERANCE_OF_AGENTS` , `THE_STANDARS_DEVIDATION_OF_AGENTS`,`THE_SIZE_OF_AGENT_NEIGHBORHOOD`
 
